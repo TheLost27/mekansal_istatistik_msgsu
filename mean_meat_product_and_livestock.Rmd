@@ -14,7 +14,7 @@ library(spdep)
 > Verimizi import ediyoruz.
 
 ```{r}
-mean_meat <- readShapePoly("mean_meat_product_and_livestock/mean_meat_product_and_livestock.shp",IDvar="OBJECTID")
+mean_meat <- readShapePoly("mena_meat_production_and_livestock_EU/mean_meat_product_and_livestock_EU.shp",IDvar="OBJECTID")
 ```
 
 > Koordinatlarımızı ayrı bir değişkene atıyoruz.
@@ -135,10 +135,10 @@ plot(contnb_q, coords, add=TRUE)
 
 ```{r}
 dnb2970.639.listw<-nb2listw(dnb2970.639,style="W",zero.policy=T) 
-dnb3970.639.listw<-nb2listw(dnb3970.639,style="W",zero.policy=T)
-dnb4970.639.listw<-nb2listw(dnb4970.639,style="W",zero.policy=T)
-dnb5970.639.listw<-nb2listw(dnb5970.639,style="W",zero.policy=T)
-dnb6970.639.listw<-nb2listw(dnb6970.639,style="W",zero.policy=T)
+dnb3970.639.listw<-nb2listw(dnb3970.639,style="W",zero.policy=F)
+dnb4970.639.listw<-nb2listw(dnb4970.639,style="W",zero.policy=F)
+dnb5970.639.listw<-nb2listw(dnb5970.639,style="W",zero.policy=F)
+dnb6970.639.listw<-nb2listw(dnb6970.639,style="W",zero.policy=F)
 ```
 
 > Mekansal Otokorelasyon testi “The Moran's I“
