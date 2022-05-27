@@ -1,0 +1,218 @@
+---
+title: "Uygulamalı Mekansal İstatistiksel Yöntemler Proje"
+author: "Yakup Tarık AÇAN"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(maptools)
+library(stats)
+library(spdep) 
+```
+
+> Verimizi import ediyoruz.
+
+```{r}
+mean_meat <- readShapePoly("mean_meat_product_and_livestock/mean_meat_product_and_livestock.shp",IDvar="OBJECTID")
+```
+
+> Koordinatlarımızı ayrı bir değişkene atıyoruz.
+
+```{r}
+coords <- coordinates(mean_meat)
+```
+
+> Dünya haritasının görselleştirilmesi.
+
+```{r}
+plot(mean_meat, border="blue", axes=TRUE) 
+points(coords, cex=0.8) 
+```
+
+> "k-Nearest neighbours" komşulukta baz alınacak uzaklıkları hesaplıyoruz. Ve Mekansal Birim Kodu "1" olan değeri inceliyoruz.
+
+```{r}
+knn1IT <- knn2nb(knearneigh(coords,k=1,longlat=T))
+knn1IT[1]
+```
+
+> KNN idlerini kontrol amaçlı harita üzerinde inceliyoruz.
+
+```{r}
+plot(mean_meat, border="grey")
+plot(knn1IT, coords, add=TRUE)
+```
+
+> KNN' lerin "k" katsayısı üzerinde değişiklik yparak aralarındaki farklara bakalım.
+
+```{r}
+knn4IT <- knn2nb(knearneigh(coords,k=4,longlat=T))
+```
+
+> "k=4" değerlerimizi harita üzerinde görselleştirelim.
+
+```{r}
+plot(mean_meat, border="grey") 
+plot(knn4IT, coords, add=TRUE) 
+```
+
+> Bu şekilde yaptığımızda daha fazla ülkenin komşu olarak işaretlendiğini görebiliyoruz.
+
+
+
+> “Critical cut-off neighbourhood” kullanarak komşuluk birimi hesaplama
+
+> Komşusuz birimin kalmaması için en kısa mesafenin hesaplanmasını yapalım.
+
+```{r}
+knn1IT <- knn2nb(knearneigh(coords,k=1,longlat=T))
+all.linkedT <- max(unlist(nbdists(knn1IT, coords, longlat=T)))
+all.linkedT
+```
+
+> Çıkan minimum değerimiz 2970.639 birim buna göre “Critical cut-off neighbourhood” değerlerimizi hesaplayalım.
+
+```{r}
+dnb2970.639 <- dnearneigh(coords, 0, 2970.639, longlat=TRUE); dnb2970.639
+dnb3970.639 <- dnearneigh(coords, 0, 3970.639, longlat=TRUE); dnb3970.639
+dnb4970.639 <- dnearneigh(coords, 0, 4970.639, longlat=TRUE); dnb4970.639
+dnb5970.639 <- dnearneigh(coords, 0, 5970.639, longlat=TRUE); dnb5970.639
+dnb6970.639 <- dnearneigh(coords, 0, 6970.639, longlat=TRUE); dnb6970.639
+```
+
+> "cut-off" mesafesi arttıkça ülkeler arası komşuluk sayılarıda artmasını bekliyoruz harita üzerinde görselleştirip inceleyelim.
+
+```{r, 2970.639}
+plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
+title(main="d nearest neighbours, d = 2970.639")
+plot(dnb2970.639, coords, add=TRUE, col="blue") 
+```
+
+```{r, 3970.639}
+plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
+title(main="d nearest neighbours, d = 3970.639")
+plot(dnb3970.639, coords, add=TRUE, col="red")
+```
+
+```{r, 4970.639}
+plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
+title(main="d nearest neighbours, d = 4970.639")
+plot(dnb4970.639, coords, add=TRUE, col="yellow" ) 
+```
+
+```{r, 5970.639}
+plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
+title(main="d nearest neighbours, d = 5970.639")
+plot(dnb5970.639, coords, add=TRUE, col="green")
+```
+
+```{r, 6970.639}
+plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
+title(main="d nearest neighbours, d = 6970.639")
+plot(dnb6970.639, coords, add=TRUE, col="grey") 
+```
+
+> "Süreklilik Bazlı Komşuluk Birimi (Contiguity-based neighbourhood)" kullanarak komşuluk birimi hesaplama
+
+> Birbirlerine sınırı olan ülkeleri komşu olarak alarak komşuluk birimlerimizi inceleyelim.
+
+```{r}
+contnb_q <- poly2nb(mean_meat, queen=T) 
+contnb_q
+```
+
+> Harita Üzerinde görselleştirmesini inceleyelim.
+
+```{r}
+plot(mean_meat, border="grey")
+plot(contnb_q, coords, add=TRUE) 
+```
+
+> Mekansal Ağırlık Matrisi oluşturalım.
+
+> Satır-Standardizasyonu yapılmış mekansal ağırlık matrislerini oluşturalım.
+
+```{r}
+dnb2970.639.listw<-nb2listw(dnb2970.639,style="W",zero.policy=T) 
+dnb3970.639.listw<-nb2listw(dnb3970.639,style="W",zero.policy=T)
+dnb4970.639.listw<-nb2listw(dnb4970.639,style="W",zero.policy=T)
+dnb5970.639.listw<-nb2listw(dnb5970.639,style="W",zero.policy=T)
+dnb6970.639.listw<-nb2listw(dnb6970.639,style="W",zero.policy=T)
+```
+
+> Mekansal Otokorelasyon testi “The Moran's I“
+
+> 2000-2018 yılları arası ortalama Sığır, Domuz ve Kümes hayvanı eti Üretimi ve canlı hayvan stokları arasındaki otokorelasyona bakalım.
+
+> Cattle
+
+```{r, Cattle}
+model_cattle <- lm(Meat_Produ~Meat_Pro_1, data = mean_meat)
+
+acf(model_cattle$residuals, type = "correlation")
+```
+
+```{r}
+brks_cattle <- quantile(model_cattle$residuals)
+colours <- grey((length(brks_cattle):2)/length(brks_cattle))
+```
+
+```{r}
+plot(mean_meat, col=colours[findInterval(model_cattle$residuals, brks_cattle, 
+all.inside=TRUE)]) 
+title(main="Sığır Üretim - Tüketimi 2000-2018")
+```
+
+```{r}
+moran.test(model_cattle$residuals, dnb2970.639.listw, randomisation=FALSE) 
+#moran.test(model_cattle$residuals, dnb3970.639.listw, randomisation=FALSE) 
+#moran.test(model_cattle$residuals, dnb4970.639.listw, randomisation=FALSE) 
+#moran.test(model_cattle$residuals, dnb5970.639.listw, randomisation=FALSE) 
+#moran.test(model_cattle$residuals, dnb6970.639.listw, randomisation=FALSE) 
+```
+
+> Pig
+
+```{r, Pig}
+model_pig <- lm(Meat_Pro_4~Meat_Pro_5, data = mean_meat)
+
+acf(model_pig$residuals, type = "correlation")
+```
+
+```{r}
+brks_pig <- quantile(model_pig$residuals)
+colours <- grey((length(brks_pig):2)/length(brks_pig))
+```
+
+```{r}
+plot(mean_meat, col=colours[findInterval(model_pig$residuals, brks_pig, 
+all.inside=TRUE)]) 
+title(main="Domuz Üretim - Tüketimi 2000-2018")
+```
+
+> Poultry
+
+```{r, Poultry}
+model_poultry <- lm(Meat_Pro_2~Meat_Pro_3, data = mean_meat)
+
+acf(model_poultry$residuals, type = "correlation")
+```
+
+```{r}
+brks_poultry <- quantile(model_poultry$residuals)
+colours <- grey((length(brks_poultry):2)/length(brks_poultry))
+```
+
+```{r}
+plot(mean_meat, col=colours[findInterval(model_pig$residuals, brks_poultry, 
+all.inside=TRUE)]) 
+title(main="Kümes Hayvanlarının Üretim - Tüketimi 2000-2018")
+```
+
+
+
+
+
+
+
