@@ -14,7 +14,7 @@ library(spdep)
 > Verimizi import ediyoruz.
 
 ```{r}
-mean_meat <- readShapePoly("mena_meat_production_and_livestock_EU/mean_meat_product_and_livestock_EU.shp",IDvar="OBJECTID")
+mean_meat <- readShapePoly("mean_meat_pro_and_live_EU/mean_meat_pro_and_live_EU.shp",IDvar="NAME")
 ```
 
 > Koordinatlarımızı ayrı bir değişkene atıyoruz.
@@ -74,6 +74,7 @@ all.linkedT
 > Çıkan minimum değerimiz 2970.639 birim buna göre “Critical cut-off neighbourhood” değerlerimizi hesaplayalım.
 
 ```{r}
+dnb1970.639 <- dnearneigh(coords, 0, 1970.639, longlat=TRUE); dnb1970.639
 dnb2970.639 <- dnearneigh(coords, 0, 2970.639, longlat=TRUE); dnb2970.639
 dnb3970.639 <- dnearneigh(coords, 0, 3970.639, longlat=TRUE); dnb3970.639
 dnb4970.639 <- dnearneigh(coords, 0, 4970.639, longlat=TRUE); dnb4970.639
@@ -82,6 +83,12 @@ dnb6970.639 <- dnearneigh(coords, 0, 6970.639, longlat=TRUE); dnb6970.639
 ```
 
 > "cut-off" mesafesi arttıkça ülkeler arası komşuluk sayılarıda artmasını bekliyoruz harita üzerinde görselleştirip inceleyelim.
+
+```{r, 1970.639}
+plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
+title(main="d nearest neighbours, d = 1970.639")
+plot(dnb2970.639, coords, add=TRUE, col="magenta") 
+```
 
 ```{r, 2970.639}
 plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
@@ -134,6 +141,7 @@ plot(contnb_q, coords, add=TRUE)
 > Satır-Standardizasyonu yapılmış mekansal ağırlık matrislerini oluşturalım.
 
 ```{r}
+dnb1970.639.listw<-nb2listw(dnb1970.639,style="W",zero.policy=T) 
 dnb2970.639.listw<-nb2listw(dnb2970.639,style="W",zero.policy=T) 
 dnb3970.639.listw<-nb2listw(dnb3970.639,style="W",zero.policy=F)
 dnb4970.639.listw<-nb2listw(dnb4970.639,style="W",zero.policy=F)
@@ -148,68 +156,85 @@ dnb6970.639.listw<-nb2listw(dnb6970.639,style="W",zero.policy=F)
 > Cattle
 
 ```{r, Cattle}
-model_cattle <- lm(Meat_Produ~Meat_Pro_1, data = mean_meat)
-
-acf(model_cattle$residuals, type = "correlation")
+model_cattle <- lm(mean_meat_~mean_mea_1, data = mean_meat)
+studres <- rstudent(model_cattle)
+#acf(model_cattle$residuals, type = "correlation")
 ```
 
 ```{r}
-brks_cattle <- quantile(model_cattle$residuals)
+brks_cattle <- quantile(studres)
 colours <- grey((length(brks_cattle):2)/length(brks_cattle))
 ```
 
 ```{r}
-plot(mean_meat, col=colours[findInterval(model_cattle$residuals, brks_cattle, 
+plot(mean_meat, col=colours[findInterval(studres, brks_cattle, 
 all.inside=TRUE)]) 
 title(main="Sığır Üretim - Tüketimi 2000-2018")
 ```
 
 ```{r}
-moran.test(model_cattle$residuals, dnb2970.639.listw, randomisation=FALSE) 
-#moran.test(model_cattle$residuals, dnb3970.639.listw, randomisation=FALSE) 
-#moran.test(model_cattle$residuals, dnb4970.639.listw, randomisation=FALSE) 
-#moran.test(model_cattle$residuals, dnb5970.639.listw, randomisation=FALSE) 
-#moran.test(model_cattle$residuals, dnb6970.639.listw, randomisation=FALSE) 
+lm.morantest(model_cattle,dnb1970.639.listw,resfun=rstudent) 
+lm.morantest(model_cattle,dnb2970.639.listw,resfun=rstudent)
+lm.morantest(model_cattle,dnb3970.639.listw,resfun=rstudent)
+lm.morantest(model_cattle,dnb4970.639.listw,resfun=rstudent)
+lm.morantest(model_cattle,dnb5970.639.listw,resfun=rstudent)
+lm.morantest(model_cattle,dnb6970.639.listw,resfun=rstudent)
 ```
 
 > Pig
 
 ```{r, Pig}
-model_pig <- lm(Meat_Pro_4~Meat_Pro_5, data = mean_meat)
-
-acf(model_pig$residuals, type = "correlation")
+model_pig <- lm(mean_mea_4~mean_mea_5, data = mean_meat)
+studres <- rstudent(model_cattle)
 ```
 
 ```{r}
-brks_pig <- quantile(model_pig$residuals)
+brks_pig <- quantile(studres)
 colours <- grey((length(brks_pig):2)/length(brks_pig))
 ```
 
 ```{r}
-plot(mean_meat, col=colours[findInterval(model_pig$residuals, brks_pig, 
+plot(mean_meat, col=colours[findInterval(studres, brks_pig, 
 all.inside=TRUE)]) 
 title(main="Domuz Üretim - Tüketimi 2000-2018")
 ```
 
+```{r}
+lm.morantest(model_pig,dnb1970.639.listw,resfun=rstudent) 
+lm.morantest(model_pig,dnb2970.639.listw,resfun=rstudent)
+lm.morantest(model_pig,dnb3970.639.listw,resfun=rstudent)
+lm.morantest(model_pig,dnb4970.639.listw,resfun=rstudent)
+lm.morantest(model_pig,dnb5970.639.listw,resfun=rstudent)
+lm.morantest(model_pig,dnb6970.639.listw,resfun=rstudent)
+```
+
+
 > Poultry
 
 ```{r, Poultry}
-model_poultry <- lm(Meat_Pro_2~Meat_Pro_3, data = mean_meat)
-
-acf(model_poultry$residuals, type = "correlation")
+model_poultry <- lm(mean_mea_2~mean_mea_3, data = mean_meat)
+studres <- rstudent(model_cattle)
 ```
 
 ```{r}
-brks_poultry <- quantile(model_poultry$residuals)
+brks_poultry <- quantile(studres)
 colours <- grey((length(brks_poultry):2)/length(brks_poultry))
 ```
 
 ```{r}
-plot(mean_meat, col=colours[findInterval(model_pig$residuals, brks_poultry, 
+plot(mean_meat, col=colours[findInterval(studres, brks_poultry, 
 all.inside=TRUE)]) 
 title(main="Kümes Hayvanlarının Üretim - Tüketimi 2000-2018")
 ```
 
+```{r}
+lm.morantest(model_poultry,dnb1970.639.listw,resfun=rstudent) 
+lm.morantest(model_poultry,dnb2970.639.listw,resfun=rstudent)
+lm.morantest(model_poultry,dnb3970.639.listw,resfun=rstudent)
+lm.morantest(model_poultry,dnb4970.639.listw,resfun=rstudent)
+lm.morantest(model_poultry,dnb5970.639.listw,resfun=rstudent)
+lm.morantest(model_poultry,dnb6970.639.listw,resfun=rstudent)
+```
 
 
 
