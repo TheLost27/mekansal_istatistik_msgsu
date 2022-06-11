@@ -9,6 +9,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(maptools)
 library(stats)
 library(spdep) 
+library(sf)
+library(purrr)
+library(ggplot2)
 ```
 
 > Verimizi import ediyoruz.
@@ -90,43 +93,13 @@ title(main="d nearest neighbours, d = 1970.639")
 plot(dnb2970.639, coords, add=TRUE, col="magenta") 
 ```
 
-```{r, 2970.639}
-plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
-title(main="d nearest neighbours, d = 2970.639")
-plot(dnb2970.639, coords, add=TRUE, col="blue") 
-```
-
-```{r, 3970.639}
-plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
-title(main="d nearest neighbours, d = 3970.639")
-plot(dnb3970.639, coords, add=TRUE, col="red")
-```
-
-```{r, 4970.639}
-plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
-title(main="d nearest neighbours, d = 4970.639")
-plot(dnb4970.639, coords, add=TRUE, col="yellow" ) 
-```
-
-```{r, 5970.639}
-plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
-title(main="d nearest neighbours, d = 5970.639")
-plot(dnb5970.639, coords, add=TRUE, col="green")
-```
-
-```{r, 6970.639}
-plot(mean_meat, border="grey",xlab="",ylab="",xlim=NULL)
-title(main="d nearest neighbours, d = 6970.639")
-plot(dnb6970.639, coords, add=TRUE, col="grey") 
-```
-
 > "Süreklilik Bazlı Komşuluk Birimi (Contiguity-based neighbourhood)" kullanarak komşuluk birimi hesaplama
 
 > Birbirlerine sınırı olan ülkeleri komşu olarak alarak komşuluk birimlerimizi inceleyelim.
 
 ```{r}
-contnb_q <- poly2nb(mean_meat, queen=T) 
-contnb_q
+#contnb_q <- poly2nb(mean_meat, queen=T) 
+st_rook = function(a, b = a) st_relate(a, b, pattern = "F***1****")
 ```
 
 > Harita Üzerinde görselleştirmesini inceleyelim.
